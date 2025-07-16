@@ -19,6 +19,22 @@ app.use('/api/users', usersRouter);
 app.use('/api/reports', reportsRouter);
 app.use('/api/ai-score', aiScoreRouter);
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    message: 'RealCheck Backend API',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      sessions: '/api/sessions',
+      users: '/api/users',
+      reports: '/api/reports',
+      aiScore: '/api/ai-score'
+    }
+  });
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'RealCheck backend is running!' });
 });
