@@ -126,7 +126,7 @@ export default function Home() {
       <header className="w-full px-4 pt-8 pb-12 flex flex-col items-center text-center">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-4 leading-tight">
-            RealCheck
+            RealCheck Pro
           </h1>
           <p className="text-xl md:text-2xl text-gray-700 mb-6 font-medium">
             <span className="bg-yellow-200 px-2 py-1 rounded">Invite Only</span> &mdash; AI-Powered Interview & Exam Monitoring
