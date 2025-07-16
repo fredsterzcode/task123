@@ -1,6 +1,9 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createClient } from '../lib/supabase';
+import { User } from '@supabase/supabase-js';
+import Link from 'next/link';
 
 export default function Home() {
   const [showRequestModal, setShowRequestModal] = useState(false);
@@ -8,6 +11,25 @@ export default function Home() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const supabase = createClient();
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      setAuthLoading(false);
+    };
+
+    getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase.auth]);
 
   const handleRequestAccess = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,12 +80,33 @@ export default function Home() {
           <p className="text-lg text-gray-600 mb-8">
             Prevent cheating, ensure fairness, and protect your reputation with real-time AI detection for live video interviews and assessments.
           </p>
-          <button
-            className="inline-block px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-700 transition text-lg"
-            onClick={() => setShowRequestModal(true)}
-          >
-            Request Access
-          </button>
+          {authLoading ? (
+            <div className="inline-block px-8 py-4 bg-gray-400 text-white font-semibold rounded-lg text-lg">
+              Loading...
+            </div>
+          ) : user ? (
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link
+                href="/download"
+                className="inline-block px-8 py-4 bg-green-600 text-white font-semibold rounded-lg shadow-lg hover:bg-green-700 transition text-lg"
+              >
+                Download Monitor
+              </Link>
+              <button
+                onClick={() => supabase.auth.signOut()}
+                className="inline-block px-8 py-4 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition text-lg"
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <button
+              className="inline-block px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-700 transition text-lg"
+              onClick={() => setShowRequestModal(true)}
+            >
+              Request Access
+            </button>
+          )}
         </div>
       </header>
 
