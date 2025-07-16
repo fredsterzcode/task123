@@ -68,6 +68,60 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+      {/* Navigation */}
+      <nav className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <Link href="/" className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">R</span>
+                </div>
+                <span className="text-xl font-bold text-gray-900">RealCheck</span>
+              </Link>
+            </div>
+            <div className="flex items-center space-x-4">
+              {!authLoading && (
+                <>
+                  {user ? (
+                    <>
+                      <Link
+                        href="/download"
+                        className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition"
+                      >
+                        Download Monitor
+                      </Link>
+                      <span className="text-sm text-gray-600">{user.email}</span>
+                      <button
+                        onClick={() => supabase.auth.signOut()}
+                        className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition"
+                      >
+                        Sign Out
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        href="/auth/login"
+                        className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition"
+                      >
+                        Sign In
+                      </Link>
+                      <Link
+                        href="/auth/register"
+                        className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition"
+                      >
+                        Get Started
+                      </Link>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
       <header className="w-full px-4 pt-8 pb-12 flex flex-col items-center text-center">
         <div className="max-w-2xl mx-auto">
