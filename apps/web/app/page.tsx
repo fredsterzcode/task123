@@ -1,35 +1,35 @@
 'use client'
 
-import { useState, useEffect } from 'react';
-import { createClient } from '../lib/supabase';
-import { User } from '@supabase/supabase-js';
-import Link from 'next/link';
+import { useState, useEffect } from 'react'
+import { createClient } from '../lib/supabase'
+import { User } from '@supabase/supabase-js'
+import Link from 'next/link'
 
 export default function Home() {
-  const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const supabase = createClient();
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      setAuthLoading(false);
-    };
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      setLoading(false)
+    }
 
-    getUser();
+    getUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
+      setUser(session?.user ?? null)
+    })
 
-    return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+    return () => subscription.unsubscribe()
+  }, [supabase.auth])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Navigation Bar */}
-      <nav className="bg-white shadow-lg border-b border-gray-200">
+      {/* Navigation */}
+      <nav className="bg-white shadow-lg border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
@@ -42,7 +42,7 @@ export default function Home() {
             </div>
             
             <div className="flex items-center space-x-4">
-              {!authLoading && (
+              {!loading && (
                 <>
                   {user ? (
                     <>
@@ -95,7 +95,7 @@ export default function Home() {
           Prevent cheating, ensure fairness, and protect your reputation with real-time AI detection for live video interviews and assessments.
         </p>
         
-        {authLoading ? (
+        {loading ? (
           <div className="inline-block px-8 py-4 bg-gray-400 text-white font-semibold rounded-lg text-lg">
             Loading...
           </div>
@@ -132,7 +132,7 @@ export default function Home() {
         )}
       </div>
 
-      {/* Features Section */}
+      {/* Features */}
       <div className="max-w-6xl mx-auto px-4 py-16">
         <div className="grid md:grid-cols-3 gap-8">
           <div className="bg-white rounded-xl shadow-lg p-8 text-center">
@@ -174,5 +174,5 @@ export default function Home() {
         </div>
       </footer>
     </div>
-  );
-}
+  )
+} 
