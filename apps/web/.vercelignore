@@ -1,0 +1,27 @@
+# Exclude monitor app (Electron app)
+../monitor/
+
+# Exclude backend
+../backend/
+
+# Exclude packages
+../../packages/
+
+# Exclude node_modules
+node_modules/
+
+# Exclude build artifacts
+.next/
+out/
+dist/
+
+# Exclude environment files
+.env*
+!.env.example
+
+# Exclude logs
+*.log
+
+# Exclude OS files
+.DS_Store
+Thumbs.db 
