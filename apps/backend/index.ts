@@ -5,6 +5,7 @@ import sessionsRouter from './routes/sessions';
 import usersRouter from './routes/users';
 import reportsRouter from './routes/reports';
 import aiScoreRouter from './routes/aiScore';
+import invitesRouter from './routes/invites';
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ app.use('/api/sessions', sessionsRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/reports', reportsRouter);
 app.use('/api/ai-score', aiScoreRouter);
+app.use('/api/invites', invitesRouter);
 
 // Root route
 app.get('/', (req, res) => {

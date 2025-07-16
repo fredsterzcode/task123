@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RealCheck Monitor - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { -webkit-app-region: drag; }
+        button, input { -webkit-app-region: no-drag; }
+    </style>
+</head>
+<body class="bg-gray-50 h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-semibold text-gray-900">RealCheck Monitor</h1>
+                    <p class="text-sm text-gray-500">AI-Powered Interview Monitoring</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button id="logoutBtn" class="text-gray-500 hover:text-gray-700 text-sm">
+                    Sign Out
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6">
+        <div class="max-w-4xl mx-auto space-y-6">
+            <!-- Status Card -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-semibold text-gray-900">Monitoring Status</h2>
+                    <div id="statusIndicator" class="flex items-center space-x-2">
+                        <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                        <span class="text-sm font-medium text-green-600">Active</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Last Check</p>
+                                <p id="lastCheck" class="font-semibold text-gray-900">Just now</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Status</p>
+                                <p class="font-semibold text-gray-900">All Clear</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-yellow-50 rounded-lg p-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                                <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Alerts</p>
+                                <p id="alertCount" class="font-semibold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex space-x-4">
+                    <button id="startBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        Start Monitoring
+                    </button>
+                    <button id="stopBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                        Stop Monitoring
+                    </button>
+                </div>
+            </div>
+
+            <!-- Alerts Section -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Recent Alerts</h2>
+                <div id="alertsList" class="space-y-3">
+                    <div class="text-center py-8 text-gray-500">
+                        <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p>No alerts yet. Monitoring is active and secure.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Section -->
+            <div class="bg-blue-50 rounded-xl p-6">
+                <div class="flex items-start space-x-4">
+                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 mb-2">Monitoring Active</h3>
+                        <p class="text-sm text-gray-600 mb-3">
+                            RealCheck is monitoring your system for AI tools, suspicious behavior, and potential cheating. 
+                            All data is encrypted and secure.
+                        </p>
+                        <div class="text-xs text-gray-500">
+                            <p>• AI tool detection active</p>
+                            <p>• Process monitoring enabled</p>
+                            <p>• Screen activity tracked</p>
+                            <p>• Network activity monitored</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize dashboard
+        let isMonitoring = true;
+        let alerts = [];
+
+        // Update status
+        async function updateStatus() {
+            try {
+                const status = await window.electronAPI.getStatus();
+                isMonitoring = status.isMonitoring;
+                
+                // Update status indicator
+                const indicator = document.getElementById('statusIndicator');
+                if (isMonitoring) {
+                    indicator.innerHTML = '<div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div><span class="text-sm font-medium text-green-600">Active</span>';
+                } else {
+                    indicator.innerHTML = '<div class="w-3 h-3 bg-red-500 rounded-full"></div><span class="text-sm font-medium text-red-600">Inactive</span>';
+                }
+
+                // Update last check
+                if (status.lastCheck) {
+                    document.getElementById('lastCheck').textContent = new Date(status.lastCheck).toLocaleTimeString();
+                }
+
+                // Update alerts
+                alerts = status.alerts || [];
+                document.getElementById('alertCount').textContent = alerts.length;
+                updateAlertsList();
+            } catch (error) {
+                console.error('Failed to update status:', error);
+            }
+        }
+
+        // Update alerts list
+        function updateAlertsList() {
+            const alertsList = document.getElementById('alertsList');
+            
+            if (alerts.length === 0) {
+                alertsList.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p>No alerts yet. Monitoring is active and secure.</p>
+                    </div>
+                `;
+            } else {
+                alertsList.innerHTML = alerts.map(alert => `
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-medium text-gray-900">${alert.message}</h4>
+                                <p class="text-sm text-gray-500">${new Date(alert.timestamp).toLocaleString()}</p>
+                            </div>
+                            <span class="px-2 py-1 text-xs font-medium rounded-full ${
+                                alert.severity === 'high' ? 'bg-red-100 text-red-800' :
+                                alert.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-blue-100 text-blue-800'
+                            }">${alert.severity}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Event listeners
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await window.electronAPI.logout();
+        });
+
+        document.getElementById('startBtn').addEventListener('click', async () => {
+            await window.electronAPI.startMonitoring();
+            updateStatus();
+        });
+
+        document.getElementById('stopBtn').addEventListener('click', async () => {
+            await window.electronAPI.stopMonitoring();
+            updateStatus();
+        });
+
+        // Initial load
+        updateStatus();
+
+        // Update every 5 seconds
+        setInterval(updateStatus, 5000);
+    </script>
+</body>
+</html> 
