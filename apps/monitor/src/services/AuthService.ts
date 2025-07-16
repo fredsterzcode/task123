@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { ConfigService } from './ConfigService';
+import os from 'os';
 
 interface LoginCredentials {
   email: string;
@@ -19,28 +20,57 @@ export class AuthService {
   private configService: ConfigService;
   private authToken: string | null = null;
   private user: any = null;
+  private deviceId: string;
+  private deviceName: string;
+  private platform: string;
 
   constructor() {
     this.configService = new ConfigService();
+    this.deviceId = `${os.hostname()}-${os.platform()}-${os.userInfo().username}`;
+    this.deviceName = os.hostname();
+    this.platform = os.platform();
   }
 
   async login(credentials: LoginCredentials): Promise<boolean> {
     try {
       const config = await this.configService.getConfig();
-      
       const response = await axios.post<AuthResponse>(`${config.backendUrl}/api/auth/login`, credentials);
-      
       if (response.data.token) {
         this.authToken = response.data.token;
         this.user = response.data.user;
-        
-        // Save auth data
         await this.configService.setAuthToken(this.authToken);
         await this.configService.setUser(this.user);
-        
+        // Register device
+        const regRes = await axios.post(`${config.backendUrl}/api/auth/device/register`, {
+          userId: this.user.id,
+          deviceId: this.deviceId,
+          deviceName: this.deviceName,
+          platform: this.platform
+        }, {
+          headers: { 'Authorization': `Bearer ${this.authToken}` }
+        });
+        if (!regRes.data.success) {
+          throw new Error(regRes.data.error || 'Device registration failed');
+        }
+        // Activate session (deactivate other devices)
+        const actRes = await axios.post(`${config.backendUrl}/api/auth/session/activate`, {
+          userId: this.user.id,
+          deviceId: this.deviceId
+        }, {
+          headers: { 'Authorization': `Bearer ${this.authToken}` }
+        });
+        if (!actRes.data.success) {
+          throw new Error(actRes.data.error || 'Session activation failed');
+        }
+        // Check device authorization
+        const checkRes = await axios.get(`${config.backendUrl}/api/auth/device/check/${this.user.id}/${this.deviceId}`, {
+          headers: { 'Authorization': `Bearer ${this.authToken}` }
+        });
+        if (!checkRes.data.isAuthorized) {
+          throw new Error('This device is not authorized for monitoring.');
+        }
         return true;
       }
-      
       return false;
     } catch (error) {
       console.error('Login failed:', error);

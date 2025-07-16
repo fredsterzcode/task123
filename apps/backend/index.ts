@@ -7,6 +7,7 @@ import reportsRouter from './routes/reports';
 import aiScoreRouter from './routes/aiScore';
 import invitesRouter from './routes/invites';
 import analyticsRouter from './routes/analytics';
+import authRouter from './routes/auth';
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.use('/api/reports', reportsRouter);
 app.use('/api/ai-score', aiScoreRouter);
 app.use('/api/invites', invitesRouter);
 app.use('/api/analytics', analyticsRouter);
+app.use('/api/auth', authRouter);
 
 // Root route
 app.get('/', (req, res) => {

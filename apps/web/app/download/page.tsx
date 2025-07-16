@@ -124,6 +124,19 @@ export default function DownloadPage() {
         </div>
 
         {/* Download Options */}
+        <div className="max-w-2xl mx-auto mb-10">
+          <div className="flex flex-col items-center justify-center bg-gradient-to-br from-green-100 to-blue-50 rounded-2xl shadow-lg p-8 border border-green-200">
+            <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mb-4 animate-bounce">
+              <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-green-800 mb-2">RealCheck Monitor</h2>
+            <span className="inline-block bg-green-200 text-green-800 text-xs font-semibold px-3 py-1 rounded-full mb-2">Latest Version</span>
+            <p className="text-gray-700 mb-2">Download the official RealCheck Monitor app for your platform below.</p>
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-3 gap-8 mb-12">
           {/* Windows */}
           <div className={`bg-white rounded-xl shadow-lg border-2 p-6 ${platform === 'windows' ? 'border-blue-500' : 'border-gray-200'}`}>

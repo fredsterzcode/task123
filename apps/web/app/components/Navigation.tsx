@@ -54,6 +54,14 @@ export default function Navigation() {
                     >
                       Download Monitor
                     </Link>
+                    {user && (
+                      <Link
+                        href="/devices"
+                        className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition"
+                      >
+                        My Devices
+                      </Link>
+                    )}
                     <div className="flex items-center space-x-2">
                       <span className="text-sm text-gray-600">{user.email}</span>
                       <button
