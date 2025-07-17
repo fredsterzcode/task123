@@ -1,6 +1,7 @@
 import express from 'express';
 import { supabase } from '../supabaseClient';
 import { requireUser } from '../supabaseAuth';
+import { v4 as uuidv4 } from 'uuid';
 
 const router = express.Router();
 
@@ -187,6 +188,31 @@ router.get('/validate/:token', async (req, res) => {
     console.error('Error validating invite:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
+});
+
+// POST /api/invites - Admin: create invite code
+router.post('/admin/invites', async (req, res) => {
+  // TODO: Add admin authentication/authorization check here!
+  const { email, invitedBy, expiresAt } = req.body;
+  const code = uuidv4();
+  const { data, error } = await supabase
+    .from('invites')
+    .insert([{ code, email, invited_by: invitedBy, expires_at: expiresAt }])
+    .select()
+    .single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ invite: data });
+});
+
+// GET /api/invites - Admin: list/export unused invite codes
+router.get('/admin/invites', async (req, res) => {
+  // TODO: Add admin authentication/authorization check here!
+  const { data, error } = await supabase
+    .from('invites')
+    .select('*')
+    .eq('used', false);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ invites: data });
 });
 
 export default router; 

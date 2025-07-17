@@ -8,6 +8,12 @@ import aiScoreRouter from './routes/aiScore';
 import invitesRouter from './routes/invites';
 import analyticsRouter from './routes/analytics';
 import authRouter from './routes/auth';
+import friendRequestsRouter from './routes/friendRequests';
+import friendsRouter from './routes/friends';
+import userSearchRouter from './routes/userSearch';
+import chatsRouter from './routes/chats';
+import groupCallsRouter from './routes/groupCalls';
+import presenceRouter from './routes/presence';
 
 dotenv.config();
 
@@ -24,6 +30,12 @@ app.use('/api/ai-score', aiScoreRouter);
 app.use('/api/invites', invitesRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/friend-requests', friendRequestsRouter);
+app.use('/api/friends', friendsRouter);
+app.use('/api/user-search', userSearchRouter);
+app.use('/api/chats', chatsRouter);
+app.use('/api/group-calls', groupCallsRouter);
+app.use('/api/presence', presenceRouter);
 
 // Root route
 app.get('/', (req, res) => {

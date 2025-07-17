@@ -1,18 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '../../../lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 export default function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [name, setName] = useState('')
+  const [username, setUsername] = useState('')
+  const [inviteCode, setInviteCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
-  const supabase = createClient()
   const router = useRouter()
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -21,20 +20,17 @@ export default function Register() {
     setError(null)
     setMessage(null)
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name,
-        }
-      }
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, username, inviteCode })
     })
-
-    if (error) {
-      setError(error.message)
+    const data = await res.json()
+    if (!res.ok) {
+      setError(data.error || 'Registration failed')
     } else {
-      setMessage('Check your email for a confirmation link!')
+      setMessage('Account created! Check your email for a confirmation link.')
+      setTimeout(() => router.push('/auth/login'), 2000)
     }
     setLoading(false)
   }
@@ -61,16 +57,16 @@ export default function Register() {
           )}
 
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-              Full Name
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              Username
             </label>
             <input
-              id="name"
-              name="name"
+              id="username"
+              name="username"
               type="text"
               required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -101,6 +97,21 @@ export default function Register() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="inviteCode" className="block text-sm font-medium text-gray-700">
+              Invite Code
+            </label>
+            <input
+              id="inviteCode"
+              name="inviteCode"
+              type="text"
+              required
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value)}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
