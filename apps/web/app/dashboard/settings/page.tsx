@@ -33,15 +33,15 @@ export default function SettingsPage() {
         setProfile(profileData.profile || {});
         setUsername(profileData.profile?.username || '');
         setName(profileData.profile?.name || '');
-        setStatus(presenceData?.presence?.status ?? 'online');
+        setStatus((presenceData?.presence as any)?.status ?? 'online');
       })
       .catch(() => setError('Failed to load profile'))
       .finally(() => setLoading(false));
     // Subscribe to presence table for real-time updates
     const presenceSub = supabase.channel('presence-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'presence', filter: `user_id=eq.${userId}` }, (payload) => {
-        if (payload.new && typeof payload.new.status === 'string') {
-          setStatus(payload.new.status ?? 'online');
+        if (payload.new && typeof (payload.new as any).status === 'string') {
+          setStatus((payload.new as any).status ?? 'online');
         }
       })
       .subscribe();
