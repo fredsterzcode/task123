@@ -14,8 +14,14 @@ export default function CallsPage() {
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [chatId, setChatId] = useState('');
-  const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+  const [userId, setUserId] = useState<string | null>(null);
   const supabase = createClient();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserId(user?.id || null);
+    });
+  }, [supabase.auth]);
 
   // Helper to fetch calls
   const fetchCalls = async () => {
@@ -32,8 +38,8 @@ export default function CallsPage() {
   };
 
   useEffect(() => {
-    fetchCalls();
     if (!userId) return;
+    fetchCalls();
     // Subscribe to group_calls table
     const callsSub = supabase.channel('group-calls-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'group_calls' }, (payload) => {
