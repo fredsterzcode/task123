@@ -80,32 +80,14 @@ router.post('/device/register', async (req, res) => {
   }
 });
 
-// POST /register - Invite-only registration
+// POST /register - Open registration (no invite required)
 router.post('/register', async (req, res) => {
-  const { email, password, username, inviteCode } = req.body;
-  if (!email || !password || !username || !inviteCode) {
+  const { email, password, username } = req.body;
+  if (!email || !password || !username) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  // 1. Check invite code
-  const { data: invite, error: inviteError } = await supabase
-    .from('invites')
-    .select('*')
-    .eq('code', inviteCode)
-    .eq('used', false)
-    .maybeSingle();
-
-  if (inviteError || !invite) {
-    return res.status(403).json({ error: 'Invalid or used invite code' });
-  }
-  if (invite.email && invite.email !== email) {
-    return res.status(403).json({ error: 'Invite code is not for this email' });
-  }
-  if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
-    return res.status(403).json({ error: 'Invite code has expired' });
-  }
-
-  // 2. Register user with Supabase Auth
+  // Register user with Supabase Auth
   const { data: signUpData, error: signUpError } = await supabase.auth.admin.createUser({
     email,
     password,
@@ -114,7 +96,7 @@ router.post('/register', async (req, res) => {
 
   const userId = signUpData.user.id;
 
-  // 3. Insert into profiles
+  // Insert into profiles
   const { error: profileError } = await supabase
     .from('profiles')
     .insert([{ id: userId, username }]);
@@ -122,12 +104,6 @@ router.post('/register', async (req, res) => {
     await supabase.auth.admin.deleteUser(userId);
     return res.status(400).json({ error: profileError.message });
   }
-
-  // 4. Mark invite as used
-  await supabase
-    .from('invites')
-    .update({ used: true, used_at: new Date().toISOString() })
-    .eq('id', invite.id);
 
   return res.status(200).json({ message: 'User registered successfully!' });
 });
