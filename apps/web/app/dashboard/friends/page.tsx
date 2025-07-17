@@ -14,6 +14,21 @@ function StatusDot({ status }: { status: string }) {
   return <span className={`inline-block w-3 h-3 rounded-full mr-2 align-middle ${statusColors[status] || 'bg-gray-300'}`}></span>;
 }
 
+function UserAvatar({ username }: { username: string | undefined }) {
+  const color = 'bg-blue-500';
+  const initial = username && username.length > 0 ? username[0].toUpperCase() : '?';
+  return (
+    <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${color} text-white font-bold mr-2`}>
+      {initial}
+    </span>
+  );
+}
+
+function playFriendRequestSound() {
+  const audio = new Audio('/friend-request.mp3');
+  audio.play();
+}
+
 export default function FriendsPage() {
   const [tab, setTab] = useState<'friends' | 'incoming' | 'sent'>('friends');
   const [friends, setFriends] = useState<any[]>([]);
@@ -25,6 +40,7 @@ export default function FriendsPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [userMap, setUserMap] = useState<Record<string, { username: string; name?: string }>>({});
   const supabase = createClient();
+  const [prevIncomingCount, setPrevIncomingCount] = useState(0);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -106,6 +122,15 @@ export default function FriendsPage() {
     };
   }, [userId]);
 
+  // Play sound when a new incoming friend request is received
+  useEffect(() => {
+    if (incoming.length > prevIncomingCount) {
+      playFriendRequestSound();
+    }
+    setPrevIncomingCount(incoming.length);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [incoming.length]);
+
   const handleAccept = async (requestId: string) => {
     if (!userId) return;
     await fetch('/api/friend-requests/accept', {
@@ -164,7 +189,11 @@ export default function FriendsPage() {
                   <li key={f.friend_id} className="flex items-center justify-between py-3">
                     <span className="font-medium text-gray-800 flex items-center">
                       <StatusDot status={friendStatuses[f.friend_id] || 'offline'} />
-                      {f.friend_id}
+                      <UserAvatar username={userMap?.[f.friend_id]?.username || f.friend_id} />
+                      {userMap?.[f.friend_id]?.username || f.friend_id}
+                      {userMap?.[f.friend_id]?.name ? (
+                        <span className="ml-2 text-gray-500 text-sm">({userMap[f.friend_id]?.name})</span>
+                      ) : null}
                     </span>
                     <button
                       onClick={() => handleRemove(f.friend_id)}
@@ -183,7 +212,8 @@ export default function FriendsPage() {
               <ul className="divide-y divide-gray-200">
                 {incoming.map((r) => (
                   <li key={r.id} className="flex items-center justify-between py-3">
-                    <span className="font-medium text-gray-800">
+                    <span className="font-medium text-gray-800 flex items-center">
+                      <UserAvatar username={userMap?.[r.sender_id]?.username || r.sender_id} />
                       {userMap?.[r.sender_id]?.username || r.sender_id}
                       {userMap?.[r.sender_id]?.name ? (
                         <span className="ml-2 text-gray-500 text-sm">({userMap[r.sender_id]?.name})</span>
@@ -214,7 +244,8 @@ export default function FriendsPage() {
               <ul className="divide-y divide-gray-200">
                 {sent.map((r) => (
                   <li key={r.id} className="flex items-center justify-between py-3">
-                    <span className="font-medium text-gray-800">
+                    <span className="font-medium text-gray-800 flex items-center">
+                      <UserAvatar username={userMap?.[r.receiver_id]?.username || r.receiver_id} />
                       {userMap?.[r.receiver_id]?.username || r.receiver_id}
                       {userMap?.[r.receiver_id]?.name ? (
                         <span className="ml-2 text-gray-500 text-sm">({userMap[r.receiver_id]?.name})</span>
