@@ -41,6 +41,8 @@ export default function FriendsPage() {
   const [userMap, setUserMap] = useState<Record<string, { username: string; name?: string }>>({});
   const supabase = createClient();
   const [prevIncomingCount, setPrevIncomingCount] = useState(0);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -132,21 +134,54 @@ export default function FriendsPage() {
   }, [incoming.length]);
 
   const handleAccept = async (requestId: string) => {
-    if (!userId) return;
-    await fetch('/api/friend-requests/accept', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, requestId })
-    });
-    // No reload needed, realtime will update
+    if (!userId) {
+      setActionError('User ID missing. Please refresh and try again.');
+      return;
+    }
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      const res = await fetch('/api/friend-requests/accept', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'accept', userId, requestId })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setActionError(data.error || 'Failed to accept request');
+        console.error('Accept error:', data);
+      } else {
+        setActionSuccess('Friend request accepted!');
+      }
+    } catch (e) {
+      setActionError('Network error. Please try again.');
+      console.error('Accept network error:', e);
+    }
   };
   const handleDecline = async (requestId: string) => {
-    if (!userId) return;
-    await fetch('/api/friend-requests/decline', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, requestId })
-    });
+    if (!userId) {
+      setActionError('User ID missing. Please refresh and try again.');
+      return;
+    }
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      const res = await fetch('/api/friend-requests/decline', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'decline', userId, requestId })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setActionError(data.error || 'Failed to decline request');
+        console.error('Decline error:', data);
+      } else {
+        setActionSuccess('Friend request declined.');
+      }
+    } catch (e) {
+      setActionError('Network error. Please try again.');
+      console.error('Decline network error:', e);
+    }
   };
   const handleRemove = async (friendId: string) => {
     if (!userId) return;
@@ -176,6 +211,8 @@ export default function FriendsPage() {
           <button className={`px-4 py-2 rounded-t-lg font-medium focus:outline-none transition-colors ${tab === 'sent' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-blue-100'}`} onClick={() => setTab('sent')}>Sent Requests</button>
         </div>
         <div className="bg-white rounded-lg shadow p-6 min-h-[300px]">
+          {actionError && <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded mb-4">{actionError}</div>}
+          {actionSuccess && <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded mb-4">{actionSuccess}</div>}
           {loading ? (
             <p className="text-gray-500">Loading...</p>
           ) : error ? (
