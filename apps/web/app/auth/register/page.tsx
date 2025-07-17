@@ -25,7 +25,12 @@ export default function Register() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, username, inviteCode })
     })
-    const data = await res.json()
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      data = { error: 'Unknown error (invalid response from server)' };
+    }
     if (!res.ok) {
       setError(data.error || 'Registration failed')
     } else {
