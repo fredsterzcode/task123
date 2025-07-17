@@ -8,6 +8,16 @@ function playNotificationSound() {
   audio.play();
 }
 
+function UserAvatar({ username }: { username: string | undefined }) {
+  const color = 'bg-blue-500';
+  const initial = (username?.[0] ?? '?').toUpperCase();
+  return (
+    <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${color} text-white font-bold mr-2`}>
+      {initial}
+    </span>
+  );
+}
+
 function ChatSidebar({ chats, selectedChatId, onSelect }: { chats: any[]; selectedChatId: string | null; onSelect: (id: string) => void }) {
   return (
     <aside className="w-64 bg-gray-900 text-white h-full flex flex-col border-r border-gray-800">
@@ -20,9 +30,10 @@ function ChatSidebar({ chats, selectedChatId, onSelect }: { chats: any[]; select
             {chats.map((chat) => (
               <li key={chat.id}>
                 <button
-                  className={`w-full text-left px-4 py-2 hover:bg-gray-800 transition-colors ${selectedChatId === chat.id ? 'bg-blue-700' : ''}`}
+                  className={`w-full text-left px-4 py-2 hover:bg-gray-800 transition-colors flex items-center ${selectedChatId === chat.id ? 'bg-blue-700' : ''}`}
                   onClick={() => onSelect(chat.id)}
                 >
+                  <UserAvatar username={chat.name || `Chat ${chat.id}`} />
                   {chat.name || `Chat ${chat.id}`}
                 </button>
               </li>
@@ -137,10 +148,13 @@ export default function ChatsPage() {
               ) : (
                 <ul className="space-y-4">
                   {messages.map((msg) => (
-                    <li key={msg.id} className="">
-                      <div className="font-semibold text-blue-700">{msg.sender_id}</div>
-                      <div className="text-gray-800">{msg.content}</div>
-                      <div className="text-xs text-gray-400">{new Date(msg.created_at).toLocaleString()}</div>
+                    <li key={msg.id} className="flex items-start">
+                      <UserAvatar username={msg.sender_id} />
+                      <div>
+                        <div className="font-semibold text-blue-700">{msg.sender_id}</div>
+                        <div className="text-gray-800">{msg.content}</div>
+                        <div className="text-xs text-gray-400">{new Date(msg.created_at).toLocaleString()}</div>
+                      </div>
                     </li>
                   ))}
                 </ul>

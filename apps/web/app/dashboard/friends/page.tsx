@@ -16,7 +16,7 @@ function StatusDot({ status }: { status: string }) {
 
 function UserAvatar({ username }: { username: string | undefined }) {
   const color = 'bg-blue-500';
-  const initial = username && username.length > 0 ? username[0].toUpperCase() : '?';
+  const initial = (username?.[0] ?? '?').toUpperCase();
   return (
     <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${color} text-white font-bold mr-2`}>
       {initial}
