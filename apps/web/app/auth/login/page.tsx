@@ -26,7 +26,7 @@ export default function Login() {
     if (error) {
       setError(error.message)
     } else {
-      router.push('/')
+      router.push('/dashboard') // Redirect to dashboard after login
     }
     setLoading(false)
   }

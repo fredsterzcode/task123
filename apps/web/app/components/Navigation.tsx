@@ -49,6 +49,12 @@ export default function Navigation() {
                 {user ? (
                   <>
                     <Link
+                      href="/dashboard"
+                      className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition"
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
                       href="/download"
                       className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition"
                     >
