@@ -48,7 +48,16 @@ app.get('/', (req, res) => {
       sessions: '/api/sessions',
       users: '/api/users',
       reports: '/api/reports',
-      aiScore: '/api/ai-score'
+      aiScore: '/api/ai-score',
+      invites: '/api/invites',
+      analytics: '/api/analytics',
+      auth: '/api/auth',
+      friendRequests: '/api/friend-requests',
+      friends: '/api/friends',
+      userSearch: '/api/user-search',
+      chats: '/api/chats',
+      groupCalls: '/api/group-calls',
+      presence: '/api/presence'
     }
   });
 });
