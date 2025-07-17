@@ -1,6 +1,7 @@
 "use client";
 import Sidebar from '../../components/Sidebar';
 import { useEffect, useState } from 'react';
+import { createClient } from '../../../lib/supabase';
 
 const statusOptions = [
   { value: 'online', label: 'Online', color: 'bg-green-500' },
@@ -19,6 +20,7 @@ export default function SettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+  const supabase = createClient();
 
   useEffect(() => {
     if (!userId) return;
@@ -31,10 +33,21 @@ export default function SettingsPage() {
         setProfile(profileData.profile || {});
         setUsername(profileData.profile?.username || '');
         setName(profileData.profile?.name || '');
-        setStatus(presenceData.presence?.status || 'online');
+        setStatus(presenceData?.presence?.status ?? 'online');
       })
       .catch(() => setError('Failed to load profile'))
       .finally(() => setLoading(false));
+    // Subscribe to presence table for real-time updates
+    const presenceSub = supabase.channel('presence-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'presence', filter: `user_id=eq.${userId}` }, (payload) => {
+        if (payload.new && typeof payload.new.status === 'string') {
+          setStatus(payload.new.status ?? 'online');
+        }
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(presenceSub);
+    };
   }, [userId]);
 
   const handleSave = async (e: React.FormEvent) => {

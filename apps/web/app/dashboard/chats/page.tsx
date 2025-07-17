@@ -1,6 +1,12 @@
 "use client";
 import Sidebar from '../../components/Sidebar';
 import { useEffect, useState } from 'react';
+import { createClient } from '../../../lib/supabase';
+
+function playNotificationSound() {
+  const audio = new Audio('/notification.mp3');
+  audio.play();
+}
 
 function ChatSidebar({ chats, selectedChatId, onSelect }: { chats: any[]; selectedChatId: string | null; onSelect: (id: string) => void }) {
   return (
@@ -40,26 +46,63 @@ export default function ChatsPage() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+  const supabase = createClient();
 
-  useEffect(() => {
+  // Helper to fetch chats
+  const fetchChats = async () => {
     if (!userId) return;
     setLoadingChats(true);
-    fetch(`/api/chats?userId=${userId}`)
-      .then(res => res.json())
-      .then(data => setChats(data.chats || []))
-      .catch(() => setError('Failed to load chats'))
-      .finally(() => setLoadingChats(false));
+    try {
+      const res = await fetch(`/api/chats?userId=${userId}`);
+      const data = await res.json();
+      setChats(data.chats || []);
+    } catch {
+      setError('Failed to load chats');
+    }
+    setLoadingChats(false);
+  };
+
+  // Helper to fetch messages
+  const fetchMessages = async (chatId: string) => {
+    setLoadingMessages(true);
+    try {
+      const res = await fetch(`/api/chats/${chatId}/messages`);
+      const data = await res.json();
+      setMessages(data.messages || []);
+    } catch {
+      setError('Failed to load messages');
+    }
+    setLoadingMessages(false);
+  };
+
+  useEffect(() => {
+    fetchChats();
+    if (!userId) return;
+    // Subscribe to chats table
+    const chatsSub = supabase.channel('chats-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'chats', filter: `user_id=eq.${userId}` }, fetchChats)
+      .subscribe();
+    return () => {
+      supabase.removeChannel(chatsSub);
+    };
   }, [userId]);
 
   useEffect(() => {
     if (!selectedChatId) return;
-    setLoadingMessages(true);
-    fetch(`/api/chats/${selectedChatId}/messages`)
-      .then(res => res.json())
-      .then(data => setMessages(data.messages || []))
-      .catch(() => setError('Failed to load messages'))
-      .finally(() => setLoadingMessages(false));
-  }, [selectedChatId]);
+    fetchMessages(selectedChatId);
+    // Subscribe to messages table
+    const messagesSub = supabase.channel('messages-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `chat_id=eq.${selectedChatId}` }, (payload) => {
+        fetchMessages(selectedChatId);
+        if (payload.eventType === 'INSERT' && payload.new.sender_id !== userId) {
+          playNotificationSound();
+        }
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(messagesSub);
+    };
+  }, [selectedChatId, userId]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,10 +113,7 @@ export default function ChatsPage() {
       body: JSON.stringify({ userId, content: message })
     });
     setMessage('');
-    // Refresh messages
-    fetch(`/api/chats/${selectedChatId}/messages`)
-      .then(res => res.json())
-      .then(data => setMessages(data.messages || []));
+    // No manual refresh needed, realtime will update
   };
 
   return (

@@ -1,6 +1,7 @@
 "use client";
 import Sidebar from '../../components/Sidebar';
 import { useEffect, useState } from 'react';
+import { createClient } from '../../../lib/supabase';
 
 const statusColors: Record<string, string> = {
   online: 'bg-green-500',
@@ -22,44 +23,62 @@ export default function FriendsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+  const supabase = createClient();
 
-  useEffect(() => {
+  // Helper to fetch all data
+  const fetchAll = async () => {
     if (!userId) return;
     setLoading(true);
     setError(null);
-    // Fetch friends
-    fetch(`/api/friends?userId=${userId}`)
-      .then(res => res.json())
-      .then(data => {
-        setFriends(data.friends || []);
-        // Fetch presence for each friend
-        if (data.friends && data.friends.length > 0) {
-          Promise.all(
-            data.friends.map((f: any) =>
-              fetch(`/api/presence/${f.friend_id}`)
-                .then(res => res.json())
-                .then(pres => ({ id: f.friend_id, status: pres.presence?.status || 'offline' }))
-                .catch(() => ({ id: f.friend_id, status: 'offline' }))
-            )
-          ).then(statusArr => {
-            const statusMap: Record<string, string> = {};
-            statusArr.forEach(s => { statusMap[s.id] = s.status; });
-            setFriendStatuses(statusMap);
-          });
-        }
-      })
-      .catch(() => setError('Failed to load friends'));
-    // Fetch friend requests
-    fetch(`/api/friend-requests?userId=${userId}`)
-      .then(res => res.json())
-      .then(data => {
-        const incomingReqs = (data.requests || []).filter((r: any) => r.receiver_id === userId);
-        const sentReqs = (data.requests || []).filter((r: any) => r.sender_id === userId);
-        setIncoming(incomingReqs);
-        setSent(sentReqs);
-      })
-      .catch(() => setError('Failed to load friend requests'))
-      .finally(() => setLoading(false));
+    try {
+      // Fetch friends
+      const res = await fetch(`/api/friends?userId=${userId}`);
+      const data = await res.json();
+      setFriends(data.friends || []);
+      // Fetch presence for each friend
+      if (data.friends && data.friends.length > 0) {
+        const statusArr = await Promise.all(
+          data.friends.map((f: any) =>
+            fetch(`/api/presence/${f.friend_id}`)
+              .then(res => res.json())
+              .then(pres => ({ id: f.friend_id, status: pres.presence?.status || 'offline' }))
+              .catch(() => ({ id: f.friend_id, status: 'offline' }))
+          )
+        );
+        const statusMap: Record<string, string> = {};
+        statusArr.forEach(s => { statusMap[s.id] = s.status; });
+        setFriendStatuses(statusMap);
+      }
+      // Fetch friend requests
+      const reqRes = await fetch(`/api/friend-requests?userId=${userId}`);
+      const reqData = await reqRes.json();
+      const incomingReqs = (reqData.requests || []).filter((r: any) => r.receiver_id === userId);
+      const sentReqs = (reqData.requests || []).filter((r: any) => r.sender_id === userId);
+      setIncoming(incomingReqs);
+      setSent(sentReqs);
+    } catch {
+      setError('Failed to load friends or requests');
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchAll();
+    if (!userId) return;
+    // Subscribe to friends table
+    const friendsSub = supabase.channel('friends-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'friends', filter: `user_id=eq.${userId}` }, fetchAll)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'friends', filter: `friend_id=eq.${userId}` }, fetchAll)
+      .subscribe();
+    // Subscribe to friend_requests table
+    const requestsSub = supabase.channel('friend-requests-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'friend_requests', filter: `sender_id=eq.${userId}` }, fetchAll)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'friend_requests', filter: `receiver_id=eq.${userId}` }, fetchAll)
+      .subscribe();
+    return () => {
+      supabase.removeChannel(friendsSub);
+      supabase.removeChannel(requestsSub);
+    };
   }, [userId]);
 
   const handleAccept = async (requestId: string) => {
@@ -68,7 +87,7 @@ export default function FriendsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, requestId })
     });
-    window.location.reload();
+    // No reload needed, realtime will update
   };
   const handleDecline = async (requestId: string) => {
     await fetch('/api/friend-requests/decline', {
@@ -76,7 +95,6 @@ export default function FriendsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, requestId })
     });
-    window.location.reload();
   };
   const handleRemove = async (friendId: string) => {
     await fetch(`/api/friends/${friendId}`, {
@@ -84,7 +102,6 @@ export default function FriendsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId })
     });
-    window.location.reload();
   };
   const handleCancel = async (requestId: string) => {
     await fetch(`/api/friend-requests/${requestId}`, {
@@ -92,7 +109,6 @@ export default function FriendsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId })
     });
-    window.location.reload();
   };
 
   return (

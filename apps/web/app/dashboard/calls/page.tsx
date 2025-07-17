@@ -1,6 +1,12 @@
 "use client";
 import Sidebar from '../../components/Sidebar';
 import { useEffect, useState } from 'react';
+import { createClient } from '../../../lib/supabase';
+
+function playCallNotificationSound() {
+  const audio = new Audio('/call-notification.mp3');
+  audio.play();
+}
 
 export default function CallsPage() {
   const [calls, setCalls] = useState<any[]>([]);
@@ -9,15 +15,35 @@ export default function CallsPage() {
   const [creating, setCreating] = useState(false);
   const [chatId, setChatId] = useState('');
   const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+  const supabase = createClient();
 
-  useEffect(() => {
+  // Helper to fetch calls
+  const fetchCalls = async () => {
     if (!userId) return;
     setLoading(true);
-    fetch(`/api/group-calls?userId=${userId}`)
-      .then(res => res.json())
-      .then(data => setCalls(data.calls || []))
-      .catch(() => setError('Failed to load group calls'))
-      .finally(() => setLoading(false));
+    try {
+      const res = await fetch(`/api/group-calls?userId=${userId}`);
+      const data = await res.json();
+      setCalls(data.calls || []);
+    } catch {
+      setError('Failed to load group calls');
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchCalls();
+    if (!userId) return;
+    // Subscribe to group_calls table
+    const callsSub = supabase.channel('group-calls-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'group_calls' }, (payload) => {
+        fetchCalls();
+        playCallNotificationSound();
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(callsSub);
+    };
   }, [userId]);
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -31,7 +57,7 @@ export default function CallsPage() {
     });
     setChatId('');
     setCreating(false);
-    window.location.reload();
+    // No reload needed, realtime will update
   };
 
   const handleJoin = async (callId: string) => {
@@ -40,7 +66,7 @@ export default function CallsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId })
     });
-    window.location.reload();
+    // No reload needed, realtime will update
   };
 
   const handleLeave = async (callId: string) => {
@@ -49,7 +75,7 @@ export default function CallsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId })
     });
-    window.location.reload();
+    // No reload needed, realtime will update
   };
 
   return (
