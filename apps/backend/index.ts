@@ -57,6 +57,4 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'RealCheck backend is running!' });
 });
 
-app.listen(PORT, () => {
-  console.log(`RealCheck backend listening on port ${PORT}`);
-}); 
+export default app; 
