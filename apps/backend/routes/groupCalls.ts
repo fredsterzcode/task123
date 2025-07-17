@@ -70,4 +70,25 @@ router.get('/', async (req, res) => {
   res.json({ calls });
 });
 
+// GET /api/group-calls/:call_id/participants - List participants for a group call
+router.get('/:call_id/participants', async (req, res) => {
+  const { call_id } = req.params;
+  if (!call_id) return res.status(400).json({ error: 'Missing call_id' });
+  // Get participants for the call
+  const { data: participants, error: partError } = await supabase
+    .from('call_participants')
+    .select('user_id')
+    .eq('call_id', call_id);
+  if (partError) return res.status(500).json({ error: partError.message });
+  const userIds = participants.map(row => row.user_id);
+  if (userIds.length === 0) return res.json({ participants: [] });
+  // Get user info for each participant
+  const { data: users, error: userError } = await supabase
+    .from('users')
+    .select('id, username, name, avatar_url')
+    .in('id', userIds);
+  if (userError) return res.status(500).json({ error: userError.message });
+  res.json({ participants: users });
+});
+
 export default router; 
