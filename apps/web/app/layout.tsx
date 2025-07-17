@@ -1,75 +1,14 @@
-'use client';
-
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
-import { useEffect, useState } from 'react';
-import { createClient } from '../lib/supabase';
-import { User } from '@supabase/supabase-js';
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "RealCheck - AI-Powered Interview Monitoring",
   description: "Monitor live video calls and detect AI-assisted behavior in real-time",
 };
 
-function NavActions() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClient();
-
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      setLoading(false);
-    };
-    getUser();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-    return () => subscription.unsubscribe();
-  }, [supabase.auth]);
-
-  if (loading) return null;
-  if (user) {
-    return (
-      <>
-        <Link
-          href="/download"
-          className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
-        >
-          Download Monitor
-        </Link>
-        <span className="text-sm text-gray-600">{user.email}</span>
-        <button
-          onClick={() => supabase.auth.signOut()}
-          className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-        >
-          Sign Out
-        </button>
-      </>
-    );
-  }
-  return (
-    <>
-      <Link
-        href="/auth/login"
-        className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-      >
-        Sign In
-      </Link>
-      <Link
-        href="/auth/register"
-        className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-      >
-        Get Started
-      </Link>
-    </>
-  );
-}
+const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({
   children,
@@ -89,7 +28,7 @@ export default function RootLayout({
                 <span className="text-2xl font-bold text-gray-900">RealCheck</span>
               </Link>
               <div className="flex items-center space-x-4">
-                <NavActions />
+                {/* Auth logic will be handled in a client component below */}
               </div>
             </div>
           </div>
