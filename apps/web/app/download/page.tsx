@@ -9,27 +9,25 @@ export default function DownloadPage() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [platform, setPlatform] = useState<string>('')
+  const [userId, setUserId] = useState<string | null>(null);
   const supabase = createClient()
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      setLoading(false)
-    }
-
-    getUser()
-
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+      setUserId(user?.id || null);
+      setLoading(false);
+    });
     // Detect platform
-    const userAgent = navigator.userAgent
+    const userAgent = navigator.userAgent;
     if (userAgent.includes('Win')) {
-      setPlatform('windows')
+      setPlatform('windows');
     } else if (userAgent.includes('Mac')) {
-      setPlatform('mac')
+      setPlatform('mac');
     } else {
-      setPlatform('linux')
+      setPlatform('linux');
     }
-  }, [supabase.auth])
+  }, [supabase.auth]);
 
   const downloadLinks = {
     windows: {
@@ -63,7 +61,7 @@ export default function DownloadPage() {
         body: JSON.stringify({
           platform,
           version: link.version,
-          userId: user?.id
+          userId: userId
         })
       })
     } catch (error) {

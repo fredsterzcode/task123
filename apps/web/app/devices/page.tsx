@@ -10,18 +10,24 @@ export default function DevicesPage() {
   const [devices, setDevices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
-    const fetchDevices = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+    supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
-      if (!user) {
+      setUserId(user?.id || null);
+    });
+  }, [supabase.auth]);
+
+  useEffect(() => {
+    const fetchDevices = async () => {
+      if (!userId) {
         setLoading(false);
         return;
       }
       try {
-        const res = await fetch(`/api/devices?userId=${user.id}`, {
+        const res = await fetch(`/api/devices?userId=${userId}`, {
           headers: {
             'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
           }
@@ -38,10 +44,10 @@ export default function DevicesPage() {
       setLoading(false);
     };
     fetchDevices();
-  }, [supabase.auth]);
+  }, [supabase.auth, userId]);
 
   const handleRemove = async (deviceId: string) => {
-    if (!user) return;
+    if (!userId) return;
     try {
       const res = await fetch(`/api/devices/${deviceId}`, {
         method: 'DELETE',
@@ -49,7 +55,7 @@ export default function DevicesPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
         },
-        body: JSON.stringify({ userId: user.id })
+        body: JSON.stringify({ userId })
       });
       if (res.ok) {
         setDevices(devices.filter(d => d.id !== deviceId));

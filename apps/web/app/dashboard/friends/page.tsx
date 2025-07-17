@@ -22,8 +22,14 @@ export default function FriendsPage() {
   const [sent, setSent] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+  const [userId, setUserId] = useState<string | null>(null);
   const supabase = createClient();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserId(user?.id || null);
+    });
+  }, [supabase.auth]);
 
   // Helper to fetch all data
   const fetchAll = async () => {
@@ -63,8 +69,8 @@ export default function FriendsPage() {
   };
 
   useEffect(() => {
-    fetchAll();
     if (!userId) return;
+    fetchAll();
     // Subscribe to friends table
     const friendsSub = supabase.channel('friends-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'friends', filter: `user_id=eq.${userId}` }, fetchAll)
@@ -82,6 +88,7 @@ export default function FriendsPage() {
   }, [userId]);
 
   const handleAccept = async (requestId: string) => {
+    if (!userId) return;
     await fetch('/api/friend-requests/accept', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -90,6 +97,7 @@ export default function FriendsPage() {
     // No reload needed, realtime will update
   };
   const handleDecline = async (requestId: string) => {
+    if (!userId) return;
     await fetch('/api/friend-requests/decline', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -97,6 +105,7 @@ export default function FriendsPage() {
     });
   };
   const handleRemove = async (friendId: string) => {
+    if (!userId) return;
     await fetch(`/api/friends/${friendId}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
@@ -104,6 +113,7 @@ export default function FriendsPage() {
     });
   };
   const handleCancel = async (requestId: string) => {
+    if (!userId) return;
     await fetch(`/api/friend-requests/${requestId}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
