@@ -28,6 +28,7 @@ export default function Navigation() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
+    localStorage.removeItem('userId'); // <-- Clear userId on logout
   }
 
   return (

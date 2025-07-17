@@ -23,9 +23,12 @@ export default function Login() {
       password,
     })
 
+    // Fetch user after login
+    const { data: { user } } = await supabase.auth.getUser();
     if (error) {
       setError(error.message)
-    } else {
+    } else if (user) {
+      localStorage.setItem('userId', user.id); // <-- Set userId
       router.push('/dashboard') // Redirect to dashboard after login
     }
     setLoading(false)
