@@ -23,6 +23,7 @@ export default function FriendsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userMap, setUserMap] = useState<Record<string, { username: string; name?: string }>>({});
   const supabase = createClient();
 
   useEffect(() => {
@@ -62,6 +63,24 @@ export default function FriendsPage() {
       const sentReqs = (reqData.requests || []).filter((r: any) => r.sender_id === userId);
       setIncoming(incomingReqs);
       setSent(sentReqs);
+      // Collect all user IDs to fetch
+      const userIds = [
+        ...incomingReqs.map((r: any) => r.sender_id),
+        ...sentReqs.map((r: any) => r.receiver_id)
+      ];
+      // Remove duplicates
+      const uniqueUserIds = Array.from(new Set(userIds));
+      // Fetch user profiles in batch
+      if (uniqueUserIds.length > 0) {
+        const profileRes = await fetch(`/api/user-search?ids=${uniqueUserIds.join(',')}`);
+        const profileData = await profileRes.json();
+        // Map userId to username/name
+        const map: Record<string, { username: string; name?: string }> = {};
+        (profileData.users || []).forEach((u: any) => {
+          map[u.id] = { username: u.username, name: u.name };
+        });
+        setUserMap(map);
+      }
     } catch {
       setError('Failed to load friends or requests');
     }
@@ -164,7 +183,12 @@ export default function FriendsPage() {
               <ul className="divide-y divide-gray-200">
                 {incoming.map((r) => (
                   <li key={r.id} className="flex items-center justify-between py-3">
-                    <span className="font-medium text-gray-800">{r.sender_id}</span>
+                    <span className="font-medium text-gray-800">
+                      {userMap?.[r.sender_id]?.username || r.sender_id}
+                      {userMap?.[r.sender_id]?.name ? (
+                        <span className="ml-2 text-gray-500 text-sm">({userMap[r.sender_id]?.name})</span>
+                      ) : null}
+                    </span>
                     <div className="space-x-2">
                       <button
                         onClick={() => handleAccept(r.id)}
@@ -190,7 +214,12 @@ export default function FriendsPage() {
               <ul className="divide-y divide-gray-200">
                 {sent.map((r) => (
                   <li key={r.id} className="flex items-center justify-between py-3">
-                    <span className="font-medium text-gray-800">{r.receiver_id}</span>
+                    <span className="font-medium text-gray-800">
+                      {userMap?.[r.receiver_id]?.username || r.receiver_id}
+                      {userMap?.[r.receiver_id]?.name ? (
+                        <span className="ml-2 text-gray-500 text-sm">({userMap[r.receiver_id]?.name})</span>
+                      ) : null}
+                    </span>
                     <button
                       onClick={() => handleCancel(r.id)}
                       className="text-red-600 hover:underline text-sm"
