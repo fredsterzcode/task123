@@ -1,6 +1,6 @@
 "use client";
 import Sidebar from '../../components/Sidebar';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function SearchPage() {
   const [query, setQuery] = useState('');
@@ -8,7 +8,27 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [friends, setFriends] = useState<string[]>([]);
+  const [sentRequests, setSentRequests] = useState<string[]>([]);
+  const [receivedRequests, setReceivedRequests] = useState<string[]>([]);
   const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+
+  // Fetch friends and friend requests on mount
+  useEffect(() => {
+    const fetchRelations = async () => {
+      if (!userId) return;
+      // Fetch friends
+      const friendsRes = await fetch(`/api/friends?userId=${userId}`);
+      const friendsData = await friendsRes.json();
+      setFriends((friendsData.friends || []).map((f: any) => f.friend_id));
+      // Fetch friend requests
+      const reqRes = await fetch(`/api/friend-requests?userId=${userId}`);
+      const reqData = await reqRes.json();
+      setSentRequests((reqData.requests || []).filter((r: any) => r.sender_id === userId).map((r: any) => r.receiver_id));
+      setReceivedRequests((reqData.requests || []).filter((r: any) => r.receiver_id === userId).map((r: any) => r.sender_id));
+    };
+    fetchRelations();
+  }, [userId]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,9 +102,23 @@ export default function SearchPage() {
                   </div>
                   <button
                     onClick={() => handleSendRequest(user.id)}
-                    className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm"
+                    className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm disabled:opacity-50"
+                    disabled={
+                      user.id === userId ||
+                      friends.includes(user.id) ||
+                      sentRequests.includes(user.id) ||
+                      receivedRequests.includes(user.id)
+                    }
                   >
-                    Add Friend
+                    {user.id === userId
+                      ? 'You'
+                      : friends.includes(user.id)
+                        ? 'Already Friends'
+                        : sentRequests.includes(user.id)
+                          ? 'Request Sent'
+                          : receivedRequests.includes(user.id)
+                            ? 'Request Received'
+                            : 'Add Friend'}
                   </button>
                 </li>
               ))}
